@@ -1,0 +1,144 @@
+Unit Tests
+With a little help from Interfaces
+20 Mar 2017
+
+Deb Spencer
+Director Ad Serving Infrastructure, Sonobi
+debspencer@gmail.com
+
+* Why Unit Test
+- Find bugs
+- Exersize code that is hard to execute under normal situations
+- Confidence in the code
+
+* Challeges to Unit Testing
+
+- Time
+- External components get in the way
+- More unit test code than real code
+- Hard to maintain, a one line fix can break a unit test and take 10x longer to fix
+
+* Simple Package to grab a web page
+
+.code slide2-package/src/goget/goget.go
+
+* Call it like this
+
+.code slide2-package/goget.go
+
+* Challenges in Testing
+
+9 lines of code, how hard can it be to test?
+
+First challenge in testing this code, is that it relies on the availablity of a web site:
+
+    statusCode, body, err := fasthttp.Get(body, url)
+
+Every time you run a unit test, you'd have to make sure the website you were talking to was up and running, meaning your test environment now has an external dependency.
+
+
+* Interfaces
+
+- Allows you to abstract code much like an interface in Java, or pure virtual class in C++
+- An Interface is just a defined set of methods, with defined inputs and outputs
+- Like Java / C++, you must implement all the methods to satisfy the interface
+
+* First Step, split the dependency into separate files
+
+.code slide3-split/src/goget/goget.go
+
+- Still not testable, but getting closer
+- Still calling a method with the depency
+
+* First Step, split the dependency into separate files
+
+.code slide3-split/src/goget/http.go
+
+* Create an Interface for the depencency
+
+.code slide4-interface/src/goget/http.go
+
+* Now call the code with the Interface
+
+.code slide4-interface/src/goget/goget.go
+
+- Now you can test it!
+
+* Fundementals of unit testing.
+
+- You ONLY care about testing your piece
+- For a defined input and defined behavior you should always get a defined output
+
+For Example:
+- If you call GoGet with a url and the site is up, you get data
+- If you call GoGet with a url and the site is down (or bad url), you get an error
+
+You DON'T have to care if the site it is up or down, that is the job of the other module.
+You ONLY care if you code functions properly.
+
+* Mocking it
+
+.code slide5-unittest/src/goget/mockhttp.go
+
+A Note on Build flags, you don't want your mock code to end up in your final product, you can prevent it with build flags
+
+    $ go build -tags prod -o goget goget.go
+
+* What you have been waiting for, the UNIT TEST
+
+.code slide5-unittest/src/goget/goget_test.go
+
+Test code is generally <filetested>_test.go
+To run the unit test
+
+     $ go test goget
+     ok      goget   0.010s  coverage: 75.0% of statements
+
+* Code coverage
+
+- Tells you want actually got executed
+- Execute like this:
+
+     $ go test -coverprofile src/goget/cover.out goget
+
+Tool to combine coverage:
+
+     $ go get -v  github.com/wadey/gocovmerge
+     $ bin/gocovmerge src/goget/cover.out src/otherstuff/cover.out > cover.out
+
+Create Coverage HTML
+
+     $ go tool cover -html=cover.out -o cover.html
+
+* Code coverage
+
+.image partial-coverage.png
+
+
+* Log Interface
+
+.code slide6-loginterface/src/goget/log.go
+
+* Log Mock
+
+.code slide6-loginterface/src/goget/mocklog.go
+
+* Updated Package
+
+.code slide6-loginterface/src/goget/goget.go
+
+* Updated Unit Test
+
+.code slide6-loginterface/src/goget/goget_test.go
+
+* Code Coverage
+
+.image full-coverage.png
+
+* More Interface Fun
+
+.code slide7-moreinterface/src/goget/goget.go
+
+* Download
+
+   http://github.com/debspencer/orlando-2017-03
